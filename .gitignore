@@ -38,3 +38,7 @@ build/
 ### Mac OS ###
 .DS_Store
 src/main/resources/firebase-service-account.json
+target/
+.firebase/
+firebase-service-account.json
+application.properties
