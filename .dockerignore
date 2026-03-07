@@ -1,0 +1,10 @@
+.git
+.github
+.idea
+.vscode
+target
+build
+.gradle
+node_modules
+*.iml
+firebase-service-account.json
