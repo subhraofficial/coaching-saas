@@ -9,4 +9,4 @@ RUN ./mvnw clean package -DskipTests
 
 EXPOSE 10000
 
-CMD ["java", "-jar", "target/coaching-saas.jar"]
+CMD ["java","-Xms256m","-Xmx512m","-jar","target/coaching-saas.jar"]
