@@ -4,8 +4,6 @@ import com.coaching.coachingsaas.domain.EmailOtp;
 import com.coaching.coachingsaas.domain.OtpPurpose;
 import com.coaching.coachingsaas.repo.EmailOtpRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -16,7 +14,7 @@ import java.time.LocalDateTime;
 public class EmailOtpService {
 
     private final EmailOtpRepository emailOtpRepository;
-    private final JavaMailSender mailSender;
+    private final EmailSenderService emailSenderService;
     private final PasswordService passwordService;
 
     private final int expiryMinutes;
@@ -25,12 +23,12 @@ public class EmailOtpService {
     private final SecureRandom random = new SecureRandom();
 
     public EmailOtpService(EmailOtpRepository emailOtpRepository,
-                           JavaMailSender mailSender,
+                           EmailSenderService emailSenderService,
                            PasswordService passwordService,
                            @Value("${app.otp.expiry-minutes:5}") int expiryMinutes,
                            @Value("${app.otp.cooldown-seconds:30}") int cooldownSeconds) {
         this.emailOtpRepository = emailOtpRepository;
-        this.mailSender = mailSender;
+        this.emailSenderService = emailSenderService;
         this.passwordService = passwordService;
         this.expiryMinutes = expiryMinutes;
         this.cooldownSeconds = cooldownSeconds;
@@ -45,11 +43,12 @@ public class EmailOtpService {
     }
 
     private void sendOtp(String email, OtpPurpose purpose, String coachingName, String ownerName, String phone) {
-        // cooldown per email+purpose
         emailOtpRepository.findTopByEmailAndPurposeOrderByCreatedAtDesc(email, purpose).ifPresent(last -> {
             Duration diff = Duration.between(last.getCreatedAt(), LocalDateTime.now());
             if (diff.getSeconds() < cooldownSeconds) {
-                throw new IllegalStateException("Please wait " + (cooldownSeconds - diff.getSeconds()) + " seconds before requesting OTP again.");
+                throw new IllegalStateException(
+                        "Please wait " + (cooldownSeconds - diff.getSeconds()) + " seconds before requesting OTP again."
+                );
             }
         });
 
@@ -63,27 +62,17 @@ public class EmailOtpService {
         entity.setExpiresAt(LocalDateTime.now().plusMinutes(expiryMinutes));
         entity.setUsed(false);
 
-        // Store details only for register
+        // save register details
         entity.setCoachingName(coachingName);
         entity.setOwnerName(ownerName);
         entity.setPhone(phone);
 
         emailOtpRepository.save(entity);
+
         System.out.println("✅ OTP saved: email=" + email + " purpose=" + purpose + " expiresAt=" + entity.getExpiresAt());
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(email);
-        msg.setSubject("Your Coaching App OTP");
 
-        String title = (purpose == OtpPurpose.REGISTER) ? "Registration OTP" : "Login OTP";
-
-        msg.setText(
-                title + "\n\n" +
-                        "Your OTP is: " + otp + "\n\n" +
-                        "It will expire in " + expiryMinutes + " minutes.\n" +
-                        "If you did not request this, ignore this email."
-        );
-
-        mailSender.send(msg);
+        // send email using SendGrid service
+        emailSenderService.sendOtpEmail(email, otp);
     }
 
     public EmailOtp verifyOtpOrThrow(String email, String otp, OtpPurpose purpose) {
