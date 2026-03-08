@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -108,6 +109,7 @@ public class StudentController {
         );
     }
 
+    @Transactional(readOnly = true)
     @GetMapping("/{id}")
     public StudentDetailResponse detail(@PathVariable Long id, Authentication auth) {
         Long coachingId = coachingId(auth);
