@@ -1,11 +1,6 @@
 package com.coaching.coachingsaas.api;
 
-import com.coaching.coachingsaas.api.dto.BatchMiniResponse;
-import com.coaching.coachingsaas.api.dto.StudentActiveRequest;
-import com.coaching.coachingsaas.api.dto.StudentCreateRequest;
-import com.coaching.coachingsaas.api.dto.StudentDetailResponse;
-import com.coaching.coachingsaas.api.dto.StudentListItemResponse;
-import com.coaching.coachingsaas.api.dto.StudentUpdateBatchesRequest;
+import com.coaching.coachingsaas.api.dto.*;
 import com.coaching.coachingsaas.domain.Batch;
 import com.coaching.coachingsaas.domain.Coaching;
 import com.coaching.coachingsaas.domain.Student;
