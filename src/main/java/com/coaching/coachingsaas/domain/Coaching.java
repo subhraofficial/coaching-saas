@@ -31,14 +31,32 @@ public class Coaching {
     @NotBlank
     private String passwordHash;
 
+    // admin can disable coaching
+    @Column(nullable = false)
+    private boolean active = true;
+
     @Enumerated(EnumType.STRING)
     private PlanType planType = PlanType.FREE;
 
     /**
      * FREE: 50
-     * PRO:  null (unlimited)
+     * PRO: null (unlimited)
      */
     private Integer studentLimit = 50;
+
+    // -------- Billing / Subscription (Razorpay) --------
+
+    private String razorpaySubscriptionId;
+
+    private String subscriptionStatus;
+
+    private LocalDateTime currentPeriodStart;
+
+    private LocalDateTime currentPeriodEnd;
+
+    // -----------------------
+    // Getters & Setters
+    // -----------------------
 
     public Long getId() { return id; }
 
@@ -57,17 +75,14 @@ public class Coaching {
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
+
     public PlanType getPlanType() { return planType; }
     public void setPlanType(PlanType planType) { this.planType = planType; }
 
     public Integer getStudentLimit() { return studentLimit; }
     public void setStudentLimit(Integer studentLimit) { this.studentLimit = studentLimit; }
-
-    // -------- Billing / Subscription (Razorpay) --------
-    private String razorpaySubscriptionId;   // sub_xxxxx
-    private String subscriptionStatus;       // CREATED / AUTHENTICATED / ACTIVE / CANCELLED / PAUSED / EXPIRED
-    private LocalDateTime currentPeriodStart;
-    private LocalDateTime currentPeriodEnd;
 
     public String getRazorpaySubscriptionId() { return razorpaySubscriptionId; }
     public void setRazorpaySubscriptionId(String razorpaySubscriptionId) { this.razorpaySubscriptionId = razorpaySubscriptionId; }

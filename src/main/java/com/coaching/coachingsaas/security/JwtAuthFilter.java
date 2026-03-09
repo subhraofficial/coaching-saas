@@ -1,17 +1,19 @@
 package com.coaching.coachingsaas.security;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -35,19 +37,35 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String token = authHeader.substring(7);
 
             try {
-                Long coachingId = jwtService.validateAndGetCoachingId(token);
+                Claims claims = jwtService.parseToken(token);
+                String role = claims.get("role", String.class);
 
-                // principal = coachingId
+                Object principal;
+                List<SimpleGrantedAuthority> authorities;
+
+                if ("ADMIN".equals(role)) {
+                    principal = "ADMIN";
+                    authorities = List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                } else {
+                    Long coachingId = Long.parseLong(claims.getSubject());
+                    principal = coachingId;
+                    authorities = List.of(new SimpleGrantedAuthority("ROLE_COACHING"));
+                }
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                coachingId, null, Collections.emptyList()
+                                principal,
+                                null,
+                                authorities
                         );
 
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
+
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (Exception e) {
-                // invalid token -> no auth
                 SecurityContextHolder.clearContext();
             }
         }

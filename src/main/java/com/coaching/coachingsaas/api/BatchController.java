@@ -127,4 +127,30 @@ public class BatchController {
 
         return alerts;
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateBatch(@PathVariable Long id,
+                                         @Valid @RequestBody BatchUpdateRequest req,
+                                         Authentication auth) {
+        Long coachingId = (Long) auth.getPrincipal();
+
+        Batch batch = batchRepository.findByIdAndCoaching_Id(id, coachingId)
+                .orElseThrow(() -> new RuntimeException("Batch not found"));
+
+        String newName = req.name.trim();
+
+        boolean sameName = batch.getName().equalsIgnoreCase(newName);
+        if (!sameName && batchRepository.existsByCoaching_IdAndNameIgnoreCase(coachingId, newName)) {
+            return ResponseEntity.badRequest().body("Batch name already exists");
+        }
+
+        batch.setName(newName);
+        batch.setMonthlyFee(req.monthlyFee);
+        batch.setStartDate(java.time.LocalDate.parse(req.startDate));
+        batch.setExpiryDate(java.time.LocalDate.parse(req.expiryDate));
+
+        batchRepository.save(batch);
+
+        return ResponseEntity.ok(batch);
+    }
 }

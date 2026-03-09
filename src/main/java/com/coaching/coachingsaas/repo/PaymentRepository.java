@@ -16,6 +16,12 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("""
             select coalesce(sum(p.amount), 0)
             from Payment p
+           """)
+    long totalCollection();
+
+    @Query("""
+            select coalesce(sum(p.amount), 0)
+            from Payment p
             where p.coaching.id = :coachingId
               and p.student.id = :studentId
               and p.paidForMonth = :month

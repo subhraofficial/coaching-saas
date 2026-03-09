@@ -189,4 +189,35 @@ public class StudentController {
 
         return ResponseEntity.ok("Updated");
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateStudent(@PathVariable Long id,
+                                           @Valid @RequestBody StudentUpdateRequest req,
+                                           Authentication auth) {
+        Long coachingId = coachingId(auth);
+
+        Student student = studentRepository.findByIdAndCoaching_Id(id, coachingId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        String mobile = req.mobile.trim();
+
+        if (!student.getMobile().equals(mobile) &&
+                studentRepository.existsByCoaching_IdAndMobile(coachingId, mobile)) {
+            return ResponseEntity.badRequest().body("Student mobile already exists");
+        }
+
+        student.setName(req.name.trim());
+        student.setMobile(mobile);
+
+        studentRepository.save(student);
+
+        return ResponseEntity.ok(
+                new StudentListItemResponse(
+                        student.getId(),
+                        student.getName(),
+                        student.getMobile(),
+                        student.isActive()
+                )
+        );
+    }
 }
